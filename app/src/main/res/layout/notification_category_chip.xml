@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A tappable expense category chip; tapping files the debit under that category -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/notif_chip"
+    android:layout_width="0dp"
+    android:layout_height="34dp"
+    android:layout_marginEnd="6dp"
+    android:layout_weight="1"
+    android:background="@drawable/notification_chip_bg"
+    android:ellipsize="end"
+    android:gravity="center"
+    android:maxLines="1"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp"
+    android:textAppearance="@style/TextAppearance.Compat.Notification"
+    android:textSize="12sp"
+    android:textStyle="bold" />

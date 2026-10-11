@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BirrFlow</string>
+    <string name="sms_permission_rationale">BirrFlow needs SMS permission to automatically read financial transaction alerts from your banks and mobile money wallets. We never access personal text messages, initiate transfers, or upload private information.</string>
+</resources>

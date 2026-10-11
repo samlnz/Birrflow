@@ -1,0 +1,104 @@
+# Builds the BirrFlow APK on every push to main (or on demand from the Actions tab)
+# and publishes it as a GitHub Release, so it can be downloaded straight to a phone.
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Install Android SDK platform 36.1
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36.1" "platforms;android-36" > /dev/null || true
+
+      # The APK must be signed with the same key every time, or a new build can't be installed
+      # over the old one. The key is never stored in the repository: it comes from the optional
+      # DEBUG_KEYSTORE_BASE64 secret, otherwise it is created once and kept in the Actions cache.
+      - name: Restore the signing key
+        id: keystore-cache
+        uses: actions/cache@v4
+        with:
+          path: debug.keystore
+          key: birrflow-debug-keystore-v1
+
+      - name: Prepare the signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > debug.keystore
+            echo "Using the signing key from the DEBUG_KEYSTORE_BASE64 secret"
+          elif [ -f debug.keystore ]; then
+            echo "Using the cached signing key"
+          else
+            keytool -genkeypair -keystore debug.keystore -storepass android -alias androiddebugkey \
+              -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            echo "Created a new signing key (kept in the Actions cache for the next builds)"
+          fi
+
+      - name: Build the APK
+        run: gradle assembleDebug --stacktrace --no-daemon
+
+      - name: Run unit tests
+        id: tests
+        continue-on-error: true
+        run: gradle testDebugUnitTest --no-daemon
+
+      - name: Name the APK
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/*.apk dist/BirrFlow.apk
+          ls -la dist
+
+      - name: Keep the APK with this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: BirrFlow-apk
+          path: dist/BirrFlow.apk
+
+      - name: Keep the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+
+      - name: Publish as a release (download link for your phone)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: BirrFlow build ${{ github.run_number }}
+          make_latest: true
+          body: |
+            Download **BirrFlow.apk** below on your phone and open it to install.
+            Built from commit ${{ github.sha }}.
+            Unit tests: ${{ steps.tests.outcome }}
+          files: dist/BirrFlow.apk

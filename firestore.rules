@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// BirrFlow real-time sync between a person's phones.
+// Records are end-to-end encrypted on the phone; these rules only decide WHO may read/write a group.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(groupId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    match /groups/{groupId} {
+      // The first phone creates the group with a proof derived from the secret link code.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['joinProof', 'createdAt'])
+        && request.resource.data.joinProof is string
+        && request.resource.data.joinProof.size() == 64;
+      allow read: if isMember(groupId);
+      allow update, delete: if false;
+
+      // A phone may join only by presenting the same proof (i.e. it knows the link code).
+      match /members/{uid} {
+        allow create, update: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.proof == get(/databases/$(database)/documents/groups/$(groupId)).data.joinProof;
+        allow read: if isMember(groupId);
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
+
+      // Encrypted records: { d: deviceId, ts: serverTimestamp, p: ciphertext }
+      match /items/{itemId} {
+        allow read: if isMember(groupId);
+        allow write: if isMember(groupId)
+          && request.resource.data.keys().hasOnly(['d', 'ts', 'p'])
+          && request.resource.data.ts == request.time
+          && request.resource.data.p is bytes
+          && request.resource.data.p.size() < 900000;
+      }
+    }
+  }
+}

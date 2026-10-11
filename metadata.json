@@ -1,0 +1,6 @@
+{
+  "name": "BirrFlow",
+  "description": "Multi-phone bank and mobile-money SMS financial tracking with automated parsing for Telebirr, CBE, CBE Birr, and BOA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
