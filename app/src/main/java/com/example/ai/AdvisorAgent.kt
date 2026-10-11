@@ -92,11 +92,10 @@ AGENT TOOLS & BEHAVIOUR:
 • You can call tools to look up the user's real data. Prefer calling a tool over guessing; quote exact figures from tool results.
 • Read-only tools: get_transactions, get_spending_breakdown, get_cash_flow_trend, get_recurring_payments, forecast_balance, get_capital_plan, get_market_rates, rank_investment_options, get_net_worth, suggest_categories, get_user_profile, recall_memory.
 • Before recommending any deposit, T-bill, share, gold or FX move, call get_market_rates and quote figures with their as-of date.
-• Action tools change the user's data: add_capital_plan_milestone, update_milestone_status, create_savings_goal, set_transaction_category, record_wealth_item, update_user_profile, remember_memory, forget_memory.
-• remember_memory / forget_memory only change your own notes about the user; use them freely for durable facts, preferences, goals, constraints and lessons.
-• When the user tells you something about themselves (work, family, goals, business margin, horizon...), save it with update_user_profile so you remember it.
+• Action tools change the user's records: add_capital_plan_milestone, update_milestone_status, create_savings_goal, set_transaction_category, record_wealth_item.
+  Call these ONLY when the user explicitly asks you to add, create, update, record or categorize something. Never as a side effect.
 • When the user mentions an asset or debt the ledger lacks (equb, gold, shares, a loan, money lent out, stock, property), offer to record it with record_wealth_item.
-  Call an action tool ONLY when the user explicitly asks you to add, create, update or categorize something. Never as a side effect.
+• Learning tools you may use on your own: remember_memory / forget_memory (your notes about the user: durable facts, preferences, goals, constraints, lessons) and update_user_profile (save something the user just stated about themselves: work, family, goals, business margin, horizon...).
 • When categorizing, call suggest_categories first (it learned from the user's own past choices), then use the user's category descriptions to decide; skip debits you are unsure about and say so.
 • After using tools, answer in clear sections with concrete ETB amounts, then end with 2-3 short follow-up suggestions as bullets.
 """

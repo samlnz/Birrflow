@@ -61,8 +61,15 @@ object WeeklyBriefingScheduler {
     suspend fun runIfDue(app: BirrFlowApplication, force: Boolean): WeeklyBriefing? {
         val repository = app.repository
         val now = System.currentTimeMillis()
-        val lastRun = repository.getState(KEY_LAST_RUN)?.toLongOrNull() ?: 0L
-        if (!force && now - lastRun < WEEK_MS) return null
+        val lastRun = repository.getState(KEY_LAST_RUN)?.toLongOrNull()
+        if (!force) {
+            // First start: begin counting the week now instead of notifying right after install
+            if (lastRun == null) {
+                repository.putState(KEY_LAST_RUN, now.toString())
+                return null
+            }
+            if (now - lastRun < WEEK_MS) return null
+        }
 
         val txs = repository.getAllTransactionsOnce()
         // Nothing to say before the first transactions arrive

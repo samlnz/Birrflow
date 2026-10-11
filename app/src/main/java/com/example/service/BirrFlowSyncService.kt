@@ -69,6 +69,19 @@ class BirrFlowSyncService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * Android 15+ allows a dataSync foreground service about 6 hours a day, then calls this and
+     * crashes the app if the service is still running a few seconds later. SMS still arrive through
+     * the manifest receiver, so stopping here only ends the persistent notification until next launch.
+     */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (_: Exception) {
+        }
+        stopSelf()
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
