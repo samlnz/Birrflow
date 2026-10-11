@@ -11,6 +11,20 @@ GitHub builds the app for you every time the code changes. You only download and
 Tip: `https://github.com/samlnz/BirrFlow/releases/latest/download/BirrFlow.apk` always points to
 the newest build — you can bookmark it.
 
+### If GitHub Actions can't run (billing locked)
+
+GitHub won't start any build while the account's billing is locked, even on a public repository.
+Either fix it (**github.com → Settings → Billing and plans → Payment information**, pay or update the
+card), or build for free on **Codemagic** instead:
+
+1. Go to **https://codemagic.io/signup** and choose **Sign up with GitHub** (allow access to the
+   `Birrflow` repository).
+2. **Add application** → pick **samlnz/Birrflow** → project type **Android App**.
+3. Codemagic finds `codemagic.yaml`; choose the workflow **BirrFlow debug APK** and tap
+   **Start new build**.
+4. After about 10 minutes the build page shows **BirrFlow.apk** under *Artifacts* — download it on
+   your phone (Codemagic also emails a link).
+
 ## 2. Allow installing it
 
 Android blocks apps that don't come from the Play Store until you allow it once:

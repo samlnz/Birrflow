@@ -1,0 +1,33 @@
+# Codemagic (codemagic.io) build — a free alternative when GitHub Actions can't run on this account.
+# Sign in to Codemagic with GitHub, add this repository, and start the "BirrFlow debug APK" workflow.
+workflows:
+  android-debug-apk:
+    name: BirrFlow debug APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      java: 21
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Prepare the signing key
+        script: |
+          # Same key every build = updates install over the old app. Set DEBUG_KEYSTORE_BASE64 in
+          # Codemagic (Environment variables) to keep one key; otherwise a new one is made each build.
+          if [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
+            echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          else
+            keytool -genkeypair -keystore debug.keystore -storepass android -alias androiddebugkey \
+              -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+      - name: Build the APK
+        script: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          mkdir -p dist && cp app/build/outputs/apk/debug/*.apk dist/BirrFlow.apk
+    artifacts:
+      - dist/BirrFlow.apk
